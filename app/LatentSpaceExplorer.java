@@ -68,7 +68,14 @@ public void start(Stage primaryStage) {
 
     // ד. אתחול מנועי הניווט (חשוב: ליצור אותם לפני החיבור לקנבס!)
     // מנוע 2D (זום וגרירה)
-    this.navHandler = new NavigationHandler(minVals, maxVals, () -> refreshView());
+    this.navHandler = new NavigationHandler(minVals, maxVals, () -> {
+    // 1. אומרים לצייר הדו-ממדי שהגבולות השתנו וחובה לחשב מחדש
+    if (renderer != null) {
+        renderer.setNeedsReprojection(true);
+    }
+    
+    refreshView();
+});
     this.navHandler.attachTo(canvas);
     
     // מנוע 3D (סיבוב)
@@ -173,7 +180,7 @@ public void start(Stage primaryStage) {
     // ============================================================
 
     // --- כותרת ---
-    Label titleLabel = new Label("Latent Space\nExplorer");
+    Label titleLabel = new Label("Word-World");
     titleLabel.setFont(Font.font("Arial", FontWeight.BOLD, 24));
     titleLabel.setTextFill(Color.WHITE);
 
@@ -475,7 +482,8 @@ viewGroup.selectedToggleProperty().addListener((obs, oldVal, newVal) -> {
         double[] max2D = { xRange[1], yRange[1] };
         navHandler.resetTo(min2D, max2D);
     }
-    
+    if (renderer3D != null) renderer3D.setNeedsReprojection(true);
+    if (renderer != null) renderer3D.setNeedsReprojection(true);
 }
     // --- Helpers לעיצוב ---
     

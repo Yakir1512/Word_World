@@ -16,6 +16,9 @@ public class GraphRenderer3D {
 
     private Canvas canvas;
     private GraphicsContext gc;
+    // --- משתני ייעול (Cache) ---
+    private java.util.Map<String, double[]> projectionCache = new java.util.HashMap<>();
+    private boolean needsReprojection = true; // דלוק כברירת מחדל כדי שיחשב בפעם הראשונה
 
     // משתנים לשמירת המצב (מי מודגש כרגע)
     private String selectedWord;
@@ -51,7 +54,7 @@ public class GraphRenderer3D {
                        int[] axisIndices, 
                        double[] minVals, double[] maxVals,
                        double angleX, double angleY, 
-                       double scale) { // <--- פרמטר חדש
+                       double scale) { 
         
         // 1. ניקוי המסך
         gc.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
@@ -63,12 +66,32 @@ public class GraphRenderer3D {
         double centerX = width / 2;
         double centerY = height / 2;
 
+        // =======================================================
+        // שלב א': עדכון המטמון (Batch Update) - מחוץ ללולאת הציור!
+        // =======================================================
+        if (needsReprojection) {
+            projectionCache.clear(); // מנקים את הישן
+            for (WordVector wv : words) {
+                // מחשבים ושומרים
+                double[] worldPos = proj.project(wv, axisIndices, new double[]{width, height, width}, minVals, maxVals);
+                projectionCache.put(wv.getWord(), worldPos);
+            }
+            // מכבים את הדגל מיד אחרי העדכון
+            setNeedsReprojection(false);  
+            System.out.println("NeedsReprojection = false");
+        }
+        // =======================================================
+
         List<RenderPoint> pointsToDraw = new ArrayList<>();
 
+        // =======================================================
+        // שלב ב': לולאת הציור (Fast Path בלבד, ללא תנאים מיותרים)
+        // =======================================================
         for (WordVector wv : words) {
-            double[] worldPos = proj.project(wv, axisIndices, new double[]{width, height, width}, minVals, maxVals);
+            // שליפה ישירה מהמטמון (אנחנו בטוחים שהוא מעודכן)
+            double[] worldPos = projectionCache.get(wv.getWord());
             
-            // --- שינוי: העברת ה-scale ל-Helper ---
+            // חישוב קליל של המצלמה (סיבוב וזום)
             double[] screenPos = ExplorerHelper3D.projectToScreen(worldPos, centerX, centerY, angleX, angleY, scale);
             
             Color color = Color.GRAY;
@@ -85,64 +108,14 @@ public class GraphRenderer3D {
             pointsToDraw.add(new RenderPoint(screenPos[0], screenPos[1], screenPos[2], wv.getWord(), color, isHighlighted));
         }
 
+        // שלב ג': מיון וציור
         Collections.sort(pointsToDraw);
 
         for (RenderPoint p : pointsToDraw) {
             drawPoint(p);
         }
     }
-    // public void render(List<WordVector> words, 
-    //                    ProjectionStrategy proj, 
-    //                    int[] axisIndices, 
-    //                    double[] minVals, double[] maxVals,
-    //                    double angleX, double angleY) {
-        
-    //     // 1. ניקוי המסך
-    //     gc.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
-    //     gc.setFill(Color.BLACK);
-    //     gc.fillRect(0, 0, canvas.getWidth(), canvas.getHeight());
 
-    //     double width = canvas.getWidth();
-    //     double height = canvas.getHeight();
-    //     double centerX = width / 2;
-    //     double centerY = height / 2;
-
-    //     // 2. הכנת רשימה זמנית למיון
-    //     List<RenderPoint> pointsToDraw = new ArrayList<>();
-
-    //     // 3. חישוב מיקום וגודל עבור כל נקודה
-    //     for (WordVector wv : words) {
-    //         // חישוב המיקום במרחב התלת-ממדי (הקובייה)
-    //         double[] worldPos = proj.project(wv, axisIndices, new double[]{width, height, width}, minVals, maxVals);
-            
-    //         // המרה לדו-ממד + גודל (Scale) בעזרת ה-Helper החדש
-    //         double[] screenPos = ExplorerHelper3D.projectToScreen(worldPos, centerX, centerY, angleX, angleY);
-            
-    //         // קביעת צבע וסוג הנקודה
-    //         Color color = Color.GRAY;
-    //         boolean isHighlighted = false;
-
-    //         if (selectedWord != null && wv.getWord().equals(selectedWord)) {
-    //             color = Color.RED;
-    //             isHighlighted = true;
-    //         } else if (neighborWords.contains(wv.getWord())) {
-    //             color = Color.ORANGE;
-    //             isHighlighted = true;
-    //         }
-
-    //         // יצירת אובייקט נקודה והוספה לרשימה
-    //         pointsToDraw.add(new RenderPoint(screenPos[0], screenPos[1], screenPos[2], wv.getWord(), color, isHighlighted));
-    //     }
-
-    //     // 4. מיון הנקודות: מהרחוק (קטן) לקרוב (גדול)
-    //     // זהו "אלגוריתם הצייר" - מציירים קודם את הרקע ואז את החזית
-    //     Collections.sort(pointsToDraw);
-
-    //     // 5. ציור בפועל
-    //     for (RenderPoint p : pointsToDraw) {
-    //         drawPoint(p);
-    //     }
-    // }
 
     private void drawPoint(RenderPoint p) {
         // שינוי גודל העיגול לפי המרחק (Scale)
@@ -193,4 +166,8 @@ public class GraphRenderer3D {
             return Double.compare(this.scale, other.scale);
         }
     }
+
+        public void setNeedsReprojection(boolean changeTo){
+            this.needsReprojection=changeTo;
+        }
 }

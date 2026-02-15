@@ -18,6 +18,8 @@ public class SpaceManager {
     private List<WordVector> wordList = new ArrayList<>(); 
     // מחזיק את המנוע כרכיב עזר
     private SemanticSearcher searcher; 
+    //שמירת הווקטורים שכבר עשינו עליהם הטלה בשלושה מימדים
+    private Map<String, double[]> projectedCache = new HashMap<>();
 
 ////////////////////////////////////////////////////////////////
 
