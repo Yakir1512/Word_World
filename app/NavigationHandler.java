@@ -4,27 +4,21 @@ import javafx.scene.canvas.Canvas;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
 
-public class NavigationHandler {
+public class NavigationHandler extends AbstractNavigationHandler {
 
     // גבולות הזום הנוכחיים
     private double[] currentMin;
     private double[] currentMax;
     
-    // פונקציה לקריאה כשיש שינוי (לצייר מחדש)
-    private Runnable onUpdate;
     
     // משתנים למעקב אחרי הגרירה
     private double lastMouseX;
     private double lastMouseY;
 
-    // --- תוספת קריטית: דגל לשליטה על הפעלה/כיבוי ---
-    // זה מונע התנגשות עם ה-3D
-    private boolean enabled = true;
-
     public NavigationHandler(double[] initialMin, double[] initialMax, Runnable onUpdate) {
+        super(onUpdate); // מעביר את פונקציית העדכון למחלקת האב
         this.currentMin = initialMin.clone();
         this.currentMax = initialMax.clone();
-        this.onUpdate = onUpdate;
     }
 
     /**
@@ -37,40 +31,53 @@ public class NavigationHandler {
     /**
      * רושם את המאזינים לקנבס
      */
-    public void attachTo(Canvas canvas) {
-        // --- טיפול בזום (גלגלת) ---
-        canvas.addEventHandler(ScrollEvent.SCROLL, event -> {
-            if (!enabled) return; // אם המנוע כבוי, לא עושים כלום
+    // public void attachTo(Canvas canvas) {
+    //     // --- טיפול בזום (גלגלת) ---
+    //     canvas.addEventHandler(ScrollEvent.SCROLL, event -> {
+    //         if (!enabled) return; // אם המנוע כבוי, לא עושים כלום
 
-            double delta = event.getDeltaY();
-            // פקטור זום: 0.9 מתקרב, 1.1 מתרחק
-            double zoomFactor = (delta > 0) ? 0.9 : 1.1;
+    //         double delta = event.getDeltaY();
+    //         // פקטור זום: 0.9 מתקרב, 1.1 מתרחק
+    //         double zoomFactor = (delta > 0) ? 0.9 : 1.1;
 
-            applyZoom(zoomFactor);
-            onUpdate.run();
-            event.consume(); // מונע אירועים כפולים
-        });
+    //         applyZoom(zoomFactor);
+    //         onUpdate.run();
+    //         event.consume(); // מונע אירועים כפולים
+    //     });
 
-        // --- טיפול בתחילת גרירה ---
-        canvas.addEventHandler(MouseEvent.MOUSE_PRESSED, event -> {
-            if (!enabled) return;
-            lastMouseX = event.getX();
-            lastMouseY = event.getY();
-        });
+    //     // --- טיפול בתחילת גרירה ---
+    //     canvas.addEventHandler(MouseEvent.MOUSE_PRESSED, event -> {
+    //         if (!enabled) return;
+    //         lastMouseX = event.getX();
+    //         lastMouseY = event.getY();
+    //     });
 
-        // --- טיפול בגרירה עצמה (Pan) ---
-        canvas.addEventHandler(MouseEvent.MOUSE_DRAGGED, event -> {
-            if (!enabled) return;
+    //     // --- טיפול בגרירה עצמה (Pan) ---
+    //     canvas.addEventHandler(MouseEvent.MOUSE_DRAGGED, event -> {
+    //         if (!enabled) return;
 
-            double dx = event.getX() - lastMouseX;
-            double dy = event.getY() - lastMouseY;
+    //         double dx = event.getX() - lastMouseX;
+    //         double dy = event.getY() - lastMouseY;
 
-            applyPan(dx, dy, canvas.getWidth(), canvas.getHeight());
+    //         applyPan(dx, dy, canvas.getWidth(), canvas.getHeight());
 
-            lastMouseX = event.getX();
-            lastMouseY = event.getY();
-            onUpdate.run();
-        });
+    //         lastMouseX = event.getX();
+    //         lastMouseY = event.getY();
+    //         onUpdate.run();
+    //     });
+    // }
+
+    @Override
+    protected void handleDrag(double dx, double dy, double width, double height) {
+        // הבן הדו-ממדי יודע שגרירה אצלו מפעילה את פונקציית ה-Pan
+        applyPan(dx, dy, width, height);
+    }
+
+    @Override
+    protected void handleScroll(double deltaY) {
+        // הבן הדו-ממדי מתרגם את הגלילה לפקטור זום ומפעיל את applyZoom
+        double zoomFactor = (deltaY > 0) ? 0.9 : 1.1;
+        applyZoom(zoomFactor);
     }
 
     private void applyZoom(double factor) {
@@ -108,6 +115,14 @@ public class NavigationHandler {
     // (משמשים כדי לדעת אילו גבולות לשלוח ל-Helper בחיפוש מילים)
     public double[] getMin() { return currentMin; }
     public double[] getMax() { return currentMax; }
+
+
+    @Override
+    public void reset() {
+        this.currentMin = new double[]{-1.0, -1.0};
+        this.currentMax = new double[]{1.0, 1.0};
+    }
+
 
     // --- איפוס גבולות (למשל כשמחליפים צירים) ---
     public void resetTo(double[] newMin, double[] newMax) {
