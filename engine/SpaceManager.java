@@ -2,6 +2,7 @@ package engine;
 import model.WordVector;
 import math.*;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -41,22 +42,51 @@ public class SpaceManager {
 
     //  הרצת סקריפט הפייתון
     public void generateDataWithPython() throws IOException, InterruptedException {
-        System.out.println("Starting Python script...");
-        //
-        String pythonExe = "C:\\Users\\IMOE001\\AppData\\Local\\Programs\\Python\\Python314\\python.exe";
-        String scriptPath = "C:\\Users\\IMOE001\\Documents\\VsCode\\embedder.py";
-        //direct excecute of the script
-        ProcessBuilder pb = new ProcessBuilder(pythonExe, scriptPath);
+    System.out.println("Starting Python script...");
 
-        pb.inheritIO(); // כדי לראות את ההדפסות של הפייתון בקונסולה של הג'אווה
+    // 1. קבלת נתיב תיקיית העבודה הנוכחית של האפליקציה
+    String workingDir = System.getProperty("user.dir");
+    
+    // 2. בניית נתיב יחסי לסקריפט (מניח שהוא נמצא בתיקיית הפרויקט)
+    // File.separator דואג להתאמה בין ווינדוס (\) ללינוקס/מאק (/)
+    File scriptFile = new File(workingDir, "embedder.py");
+    String scriptPath = scriptFile.getAbsolutePath();
+
+    // בדיקה שהסקריפט באמת קיים לפני שמנסים להריץ
+    if (!scriptFile.exists()) {
+        throw new FileNotFoundException("Python script not found at: " + scriptPath);
+    }
+
+    // 3. שימוש בפקודה גנרית. 
+    String pythonCommand = "python"; 
+
+    System.out.println("Executing: " + pythonCommand + " " + scriptPath);
+
+    // 4. הרצה
+    ProcessBuilder pb = new ProcessBuilder(pythonCommand, scriptPath);
+    pb.inheritIO(); 
+    
+    try {
         Process p = pb.start();
-        
         int exitCode = p.waitFor();
+        
         if (exitCode != 0) {
             throw new RuntimeException("Python script failed with error code: " + exitCode);
         }
-        System.out.println("Python script finished successfully.");
+    } catch (IOException e) {
+        // אם הפקודה "python" נכשלה, ננסה "python3" כגיבוי (נפוץ במחשבי מאק/לינוקס)
+        if (e.getMessage().contains("Cannot run program \"python\"")) {
+            System.out.println("Primary python command failed, trying 'python3'...");
+            pb.command("python3", scriptPath);
+            Process p = pb.start();
+            if (p.waitFor() != 0) throw new RuntimeException("Python script failed on fallback.");
+        } else {
+            throw e;
+        }
     }
+
+    System.out.println("Python script finished successfully.");
+}
 ///////////////////////////////////////////////////////////
  
 
@@ -164,8 +194,7 @@ public void changeMetric(DistanceMetric newMetric) {
 /////////////////////////////////////////////////////////////
 
 
-// בתוך SpaceManager
-// בתוך SpaceManager.java
+
 
 public void ensureDataReady() throws IOException, InterruptedException {
     File f = new File("pca_vectors.json");
