@@ -299,6 +299,7 @@ public class LatentSpaceExplorer extends Application {
     }
 
     private void refreshView() {
+        // 1. הגנה: אם אין נתונים, פשוט מנקים את המסך
         if (spaceManager.getWordList().isEmpty()) {
             GraphicsContext gc = canvas.getGraphicsContext2D();
             gc.setFill(Color.BLACK);
@@ -306,33 +307,50 @@ public class LatentSpaceExplorer extends Application {
             return;
         }
 
+        // 2. עדכון גבולות במקרה של שינוי צירים
         if (axisChanged) {
             updateBoundaries();
             axisChanged = false;
         }
 
+        // 3. הכנת המשתנים הפולימורפיים (מכנה משותף)
+        AbstractRenderer activeRenderer;
+        RenderContext ctx;
+
         if (is3DMode) {
-            renderer3D.render(
+            // א. הגדרת השטח (Viewport) ל-3D - משתמש בגבולות העולם המקוריים
+            Viewport vp = new Viewport(axisIndices, minVals, maxVals);
+            
+            // ב. אריזת התיק (Context) המלא כולל זוויות וזום
+            ctx = new RenderContext(
                 spaceManager.getWordList(),
                 projStrt3D,
-                axisIndices,
-                minVals, maxVals,
+                vp,
                 navHandler3D.getAngleX(),
                 navHandler3D.getAngleY(),
-                navHandler3D.getScale() 
+                navHandler3D.getScale()
             );
-        } else {
-            double[] currentMin = navHandler.getMin();
-            double[] currentMax = navHandler.getMax();
             
-            renderer.render(
+            // ג. בחירת הצייר
+            activeRenderer = renderer3D;
+            
+        } else {
+            // א. הגדרת השטח (Viewport) ל-2D - משתמש בגבולות הזום של העכבר
+            Viewport vp = new Viewport(axisIndices, navHandler.getMin(), navHandler.getMax());
+            
+            // ב. אריזת התיק (Context) החלקי - מפעיל את הבנאי השני שלא דורש זוויות
+            ctx = new RenderContext(
                 spaceManager.getWordList(), 
                 projStrt, 
-                axisIndices, 
-                currentMin, 
-                currentMax
+                vp
             );
+            
+            // ג. בחירת הצייר
+            activeRenderer = renderer;
         }
+
+        // 4. קסם הפולימורפיזם: שורת קוד אחת שמפעילה את שני העולמות!
+        activeRenderer.render(ctx);
     }
 
     private void updateBoundaries() {

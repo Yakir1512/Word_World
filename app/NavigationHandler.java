@@ -1,8 +1,5 @@
 package app;
 
-import javafx.scene.canvas.Canvas;
-import javafx.scene.input.MouseEvent;
-import javafx.scene.input.ScrollEvent;
 
 public class NavigationHandler extends AbstractNavigationHandler {
 
@@ -10,10 +7,6 @@ public class NavigationHandler extends AbstractNavigationHandler {
     private double[] currentMin;
     private double[] currentMax;
     
-    
-    // משתנים למעקב אחרי הגרירה
-    private double lastMouseX;
-    private double lastMouseY;
 
     public NavigationHandler(double[] initialMin, double[] initialMax, Runnable onUpdate) {
         super(onUpdate); // מעביר את פונקציית העדכון למחלקת האב
@@ -27,45 +20,6 @@ public class NavigationHandler extends AbstractNavigationHandler {
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
     }
-
-    /**
-     * רושם את המאזינים לקנבס
-     */
-    // public void attachTo(Canvas canvas) {
-    //     // --- טיפול בזום (גלגלת) ---
-    //     canvas.addEventHandler(ScrollEvent.SCROLL, event -> {
-    //         if (!enabled) return; // אם המנוע כבוי, לא עושים כלום
-
-    //         double delta = event.getDeltaY();
-    //         // פקטור זום: 0.9 מתקרב, 1.1 מתרחק
-    //         double zoomFactor = (delta > 0) ? 0.9 : 1.1;
-
-    //         applyZoom(zoomFactor);
-    //         onUpdate.run();
-    //         event.consume(); // מונע אירועים כפולים
-    //     });
-
-    //     // --- טיפול בתחילת גרירה ---
-    //     canvas.addEventHandler(MouseEvent.MOUSE_PRESSED, event -> {
-    //         if (!enabled) return;
-    //         lastMouseX = event.getX();
-    //         lastMouseY = event.getY();
-    //     });
-
-    //     // --- טיפול בגרירה עצמה (Pan) ---
-    //     canvas.addEventHandler(MouseEvent.MOUSE_DRAGGED, event -> {
-    //         if (!enabled) return;
-
-    //         double dx = event.getX() - lastMouseX;
-    //         double dy = event.getY() - lastMouseY;
-
-    //         applyPan(dx, dy, canvas.getWidth(), canvas.getHeight());
-
-    //         lastMouseX = event.getX();
-    //         lastMouseY = event.getY();
-    //         onUpdate.run();
-    //     });
-    // }
 
     @Override
     protected void handleDrag(double dx, double dy, double width, double height) {

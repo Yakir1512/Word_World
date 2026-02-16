@@ -1,9 +1,5 @@
 package app;
 
-import javafx.scene.canvas.Canvas;
-import javafx.scene.input.MouseEvent;
-import javafx.scene.input.ScrollEvent; // <--- ייבוא חשוב
-
 public class NavigationHandler3D extends AbstractNavigationHandler{
     // זוויות הסיבוב
     private double angleX = 0;
