@@ -142,7 +142,7 @@ public class LatentSpaceExplorer extends Application {
 
         // תוספת: הגדרות צפיפות טקסט (סליידר)
         Label densityHeader = createHeader("Text Density (3D)");
-        textDensitySlider = new Slider(0.0, 12.0, 5.0); // ערך ברירת מחדל: 6.0
+        textDensitySlider = new Slider(1.0, 12.0, 6.0); // ערך ברירת מחדל: 6.0
         textDensitySlider.setShowTickMarks(true);
         textDensitySlider.setShowTickLabels(true);
         textDensitySlider.setMajorTickUnit(5);
