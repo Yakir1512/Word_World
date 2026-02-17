@@ -1,5 +1,9 @@
 package app;
 
+/*אחרי כל פעולה מתמתית שקורית כאן
+    ONUPDATE מעדכנת את הציור שוב ושוב בעזרת refreshView
+*/
+
 public class NavigationHandler3D extends AbstractNavigationHandler{
     // זוויות הסיבוב
     private double angleX = 0;
@@ -27,48 +31,7 @@ public class NavigationHandler3D extends AbstractNavigationHandler{
         scale = Math.max(0.1, Math.min(scale, 20.0));
     }
 
-    // public void attachTo(Canvas canvas) {
-    //     // --- סיבוב (קיים) ---
-    //     canvas.addEventHandler(MouseEvent.MOUSE_PRESSED, event -> {
-    //         if (!enabled) return;
-    //         lastMouseX = event.getX();
-    //         lastMouseY = event.getY();
-    //     });
-
-    //     canvas.addEventHandler(MouseEvent.MOUSE_DRAGGED, event -> {
-    //         if (!enabled) return;
-    //         double dx = event.getX() - lastMouseX;
-    //         double dy = event.getY() - lastMouseY;
-
-    //         double sensitivity = 0.005;
-    //         angleY += dx * sensitivity; 
-    //         angleX -= dy * sensitivity; 
-
-    //         lastMouseX = event.getX();
-    //         lastMouseY = event.getY();
-    //         onUpdate.run();
-    //     });
-
-    //     // --- זום (חדש!) ---
-    //     canvas.addEventHandler(ScrollEvent.SCROLL, event -> {
-    //         if (!enabled) return;
-
-    //         double delta = event.getDeltaY();
-    //         // אם גוללים למעלה - מגדילים, למטה - מקטינים
-    //         if (delta > 0) {
-    //             scale *= 1.1; 
-    //         } else {
-    //             scale /= 1.1;
-    //         }
-            
-    //         // הגבלת הזום (שלא יהיה ענק מדי או יעלם)
-    //         scale = Math.max(0.1, Math.min(scale, 20.0));
-
-    //         onUpdate.run();
-    //         event.consume();
-    //     });
-    // }
-
+    
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
     }

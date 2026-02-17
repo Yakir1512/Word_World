@@ -12,6 +12,7 @@ public class RenderContext {
     public final List<WordVector> words;       // מידע: המילים עצמן (האבא מעביר למטמון, הבנים מציירים)
     public final ProjectionStrategy proj;      // כלי: אסטרטגיית ההטלה (האבא והבנים צריכים)
     public final Viewport viewport;            // מידע: גבולות וצירים (האבא למטמון, הבנים לציור)
+    public final double textDensity;
 
     // ==========================================
     // נתוני תלת-ממד בלבד (בשימוש GraphRenderer3D)
@@ -24,14 +25,15 @@ public class RenderContext {
      * בנאי מלא - מיועד לשימוש על ידי מנוע התלת-ממד (3D)
      */
     public RenderContext(List<WordVector> words, ProjectionStrategy proj, Viewport viewport, 
-                         double angleX, double angleY, double scale) {
-        this.words = words;
-        this.proj = proj;
-        this.viewport = viewport;
-        this.angleX = angleX;
-        this.angleY = angleY;
-        this.scale = scale;
-    }
+                     double angleX, double angleY, double scale, double textDensity) {
+    this.words = words;
+    this.proj = proj;
+    this.viewport = viewport;
+    this.angleX = angleX;
+    this.angleY = angleY;
+    this.scale = scale;
+    this.textDensity = textDensity; // שמירת הערך החדש
+}
 
     /**
      * בנאי חלקי (נוחות) - מיועד לשימוש על ידי מנוע הדו-ממד (2D).
@@ -41,8 +43,10 @@ public class RenderContext {
         this.words = words;
         this.proj = proj;
         this.viewport = viewport;
+
         
         // ערכי "זבל" שהבן הדו-ממדי בכלל לא יסתכל עליהם
+        this.textDensity = 0;
         this.angleX = 0;
         this.angleY = 0;
         this.scale = 1.0;

@@ -37,6 +37,7 @@ public class GraphRenderer3D extends AbstractRenderer {
     // =======================================================
     @Override
     protected void drawElements(RenderContext ctx) {
+        this.currentTextDensity = ctx.textDensity; // שואבים את הערך מהתיק
         List<RenderElement> elements = new ArrayList<>();
         double cx = canvas.getWidth() / 2.0;
         double cy = canvas.getHeight() / 2.0;
@@ -127,7 +128,7 @@ public class GraphRenderer3D extends AbstractRenderer {
         gc.fillOval(el.x - drawSize / 2, el.y - drawSize / 2, drawSize, drawSize);
 
         // ציור טקסט: רק אם המילה נבחרת/שכנה, או אם היא קרובה מאוד אלינו (מונע בלגן במסך)
-        if (isSelected || isNeighbor || el.size > 6.0) {
+        if (isSelected || isNeighbor || el.size > currentTextDensity) {
             if (isSelected) {
                 gc.setFill(Color.WHITE);
             } else if (isNeighbor) {

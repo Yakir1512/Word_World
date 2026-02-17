@@ -8,43 +8,38 @@ public class ExplorerHelper3D {
      * הופכת קואורדינטות עולם תלת-ממדיות לנקודת מסך דו-ממדית.
      * הוספנו את הפרמטר scale כדי לתמוך בזום.
      */
-    public static double[] projectToScreen(double[] worldCoords, double centerX, double centerY, double angleX, double angleY, double scale) {
+   public static double[] projectToScreen(double[] worldCoords, double centerX, double centerY, double angleX, double angleY, double scale) {
         // 1. הזזה למרכז
         double x = worldCoords[0] - centerX;
         double y = worldCoords[1] - centerY;
         double z = worldCoords[2];
 
-        // 2. סיבוב סביב ציר Y
+        // 2. סיבוב סביב ציר Y (תוקן כדי להתאים ל-GraphRenderer3D)
         double cosY = Math.cos(angleY);
         double sinY = Math.sin(angleY);
-        double xRotY = x * cosY + z * sinY;
-        double zRotY = -x * sinY + z * cosY;
+        double xRotY = x * cosY - z * sinY;
+        double zRotY = x * sinY + z * cosY;
 
-        // 3. סיבוב סביב ציר X
+        // 3. סיבוב סביב ציר X (כבר היה תקין)
         double cosX = Math.cos(angleX);
         double sinX = Math.sin(angleX);
         double yRotX = y * cosX - zRotY * sinX;
         double zFinal = y * sinX + zRotY * cosX;
 
-        // --- כאן נכנס הזום (Scale) ---
-        // אנחנו מכפילים את המיקום במרחב לפני שמחשבים פרספקטיבה
+        // 4. זום (Scale)
         xRotY *= scale;
         yRotX *= scale;
         zFinal *= scale;
 
-        // 4. חישוב פרספקטיבה (Perspective Divide)
-        double fov = 600.0; 
-        // מונע חלוקה באפס אם הנקודה קרובה מדי למצלמה
-        double denominator = fov + zFinal;
-        if (Math.abs(denominator) < 0.1) denominator = 0.1;
+        // 5. חישוב פרספקטיבה (תוקן ל-1000 ולמינוס ZFinal)
+        double depthFactor = 1000.0 / (1000.0 - zFinal); 
+        if (depthFactor <= 0) depthFactor = 0.01;
 
-        double perspectiveScale = fov / denominator;
+        double screenX = centerX + (xRotY * depthFactor);
+        double screenY = centerY + (yRotX * depthFactor);
 
-        double screenX = centerX + (xRotY * perspectiveScale);
-        double screenY = centerY + (yRotX * perspectiveScale);
-
-        // מחזירים: X, Y, וגודל הנקודה (המושפע גם מהמרחק וגם מהזום)
-        return new double[] { screenX, screenY, perspectiveScale * scale };
+        // מחזירים: X, Y, וגודל הנקודה
+        return new double[] { screenX, screenY, depthFactor * scale };
     }
 
 

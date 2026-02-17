@@ -1,8 +1,7 @@
 package math;
 
 import model.WordVector;
-
-// Linear2DProjection.java
+//פה מיושמת תבנית האסטרטגיה שביקש לממש ProjectionStrategy
 public class Linear2DProjection implements ProjectionStrategy {
 
     @Override

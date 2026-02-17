@@ -2,7 +2,8 @@ package math;
 
 import model.WordVector;
 
-// ProjectionStrategy.java
+//פה נקבעת תבנית האסטרטגיה
+//מיושמת ב Perspective3DProjection וב Linear2DProjection
 public interface ProjectionStrategy {
     /**
      * @param wv המילה שרוצים לצייר

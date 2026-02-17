@@ -16,7 +16,7 @@ public class GraphRenderer extends AbstractRenderer {
     // =======================================================
     @Override
     protected void drawElements(RenderContext ctx) {
-        
+        this.currentTextDensity = ctx.textDensity; // שואבים את הערך מהתיק
         for (WordVector wv : ctx.words) {
             // שליפה מהירה מהמחסן (projectionCache) שמנוהל על ידי מחלקת האב
             double[] pos = projectionCache.get(wv.getWord());

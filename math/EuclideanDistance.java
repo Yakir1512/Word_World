@@ -1,6 +1,5 @@
 package math;
 
-//POLIMORPHISEM EXSAMPLE
 // מימוש לדוגמה: מרחק אוקלידי [cite: 45]
 public class EuclideanDistance implements DistanceMetric {
     @Override

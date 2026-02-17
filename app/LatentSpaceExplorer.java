@@ -22,6 +22,7 @@ public class LatentSpaceExplorer extends Application {
     // רכיבי הליבה
     private boolean is3DMode = false;
     private SpaceManager spaceManager;
+    private Slider textDensitySlider;
     
     // רכיבי דו-מימד
     private ProjectionStrategy projStrt;
@@ -139,6 +140,14 @@ public class LatentSpaceExplorer extends Application {
         
         VBox viewBox = new VBox(5, rb2D, rb3D);
 
+        // תוספת: הגדרות צפיפות טקסט (סליידר)
+        Label densityHeader = createHeader("Text Density (3D)");
+        textDensitySlider = new Slider(0.0, 12.0, 5.0); // ערך ברירת מחדל: 6.0
+        textDensitySlider.setShowTickMarks(true);
+        textDensitySlider.setShowTickLabels(true);
+        textDensitySlider.setMajorTickUnit(5);
+        VBox densityBox = new VBox(5, densityHeader, textDensitySlider);
+
         Label dataHeader = createHeader("Data Source");
         Button loadBtn = new Button("Run Python & Load");
         styleButton(loadBtn);
@@ -187,9 +196,11 @@ public class LatentSpaceExplorer extends Application {
         sidebar.setPrefWidth(250);
         sidebar.setStyle("-fx-background-color: #2b2b2b; -fx-border-color: #1a1a1a; -fx-border-width: 0 2 0 0;");
         
+        // הוספנו את densityBox ל-sidebar
         sidebar.getChildren().addAll(
             titleLabel, new Separator(), 
             viewHeader, viewBox, new Separator(),
+            densityBox, new Separator(), // התוספת כאן
             dataHeader, loadBtn, statusLabel, new Separator(),
             axisHeader, axisGrid, new Separator(),
             metricHeader, metricBox
@@ -198,6 +209,13 @@ public class LatentSpaceExplorer extends Application {
         // ============================================================
         // 4. לוגיקה ואירועים (Event Handlers)
         // ============================================================
+
+        // תוספת: מאזין לסליידר - מצייר מחדש כשהמשתמש גורר את הסליידר
+        textDensitySlider.valueProperty().addListener((obs, oldVal, newVal) -> {
+            if (is3DMode) {
+                updateView();
+            }
+        });
 
         // מעבר בין המצבים (הפעלת הפולימורפיזם!)
         viewGroup.selectedToggleProperty().addListener((obs, oldVal, newVal) -> {
@@ -321,14 +339,16 @@ public class LatentSpaceExplorer extends Application {
             // א. הגדרת השטח (Viewport) ל-3D - משתמש בגבולות העולם המקוריים
             Viewport vp = new Viewport(axisIndices, minVals, maxVals);
             
-            // ב. אריזת התיק (Context) המלא כולל זוויות וזום
+            // ב. אריזת התיק (Context) המלא כולל זוויות, זום, וכעת גם את צפיפות הטקסט מהסליידר!
+            // הוסרה שגיאת התחביר (הפסיק המיותר שהיה אחרי ה-Scale בקוד המקורי)
             ctx = new RenderContext(
                 spaceManager.getWordList(),
                 projStrt3D,
                 vp,
                 navHandler3D.getAngleX(),
                 navHandler3D.getAngleY(),
-                navHandler3D.getScale()
+                navHandler3D.getScale(),
+                textDensitySlider.getValue() 
             );
             
             // ג. בחירת הצייר
@@ -338,7 +358,7 @@ public class LatentSpaceExplorer extends Application {
             // א. הגדרת השטח (Viewport) ל-2D - משתמש בגבולות הזום של העכבר
             Viewport vp = new Viewport(axisIndices, navHandler.getMin(), navHandler.getMax());
             
-            // ב. אריזת התיק (Context) החלקי - מפעיל את הבנאי השני שלא דורש זוויות
+            // ב. אריזת התיק (Context) החלקי
             ctx = new RenderContext(
                 spaceManager.getWordList(), 
                 projStrt, 

@@ -19,6 +19,7 @@ public abstract class AbstractRenderer {
     // ==========================================
     protected Canvas canvas;
     protected GraphicsContext gc;
+    protected double currentTextDensity = 9.0;
     
     // ניהול מטמון (Cache) כדי לא לחשב השלכות מחדש בכל פריים
     protected Map<String, double[]> projectionCache = new HashMap<>();

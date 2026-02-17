@@ -3,7 +3,7 @@ package math;
 import model.WordVector;
 
 public class Perspective3DProjection implements ProjectionStrategy {
-
+    //פה מיושמת תבנית האסטרטגיה שביקש לממש ProjectionStrategy
     @Override
     public double[] project(WordVector wv, int[] axisIndices, double[] dimensions, double[] minVals, double[] maxVals) {
         // 1. שליפת שלושה צירים (נדרש מערך axisIndices באורך 3)
