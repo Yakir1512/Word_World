@@ -1,6 +1,5 @@
 package engine;
-import model.WordVector;
-import math.*;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -10,261 +9,219 @@ import java.util.List;
 import java.util.Map;
 
 import app.BackupVec;
+import math.DistanceMetric;
+import math.EuclideanDistance;
+import engine.SemanticSearcher;
+import math.VectorArithmetic; // השימוש במחלקה החיצונית
+import math.VectorMath;
+import model.EquationResult; // שימוש באובייקט התוצאה
 import model.Match;
+import model.WordVector;
 
 public class SpaceManager {
-    // מילון שמחזיק את כל המילים לגישה מהירה
+    
+    // מילון שמחזיק את כל המילים לגישה מהירה (O(1))
     private Map<String, WordVector> vocabulary = new HashMap<>();
-    // רשימה מסודרת לציור
+    
+    // רשימה מסודרת לציור ולמעבר סדרתי
     private List<WordVector> wordList = new ArrayList<>(); 
-    // מחזיק את המנוע כרכיב עזר
+    
+    // מחזיק את המנוע כרכיב עזר לחיפושים מהירים
     private SemanticSearcher searcher; 
-    //שמירת הווקטורים שכבר עשינו עליהם הטלה בשלושה מימדים
-////////////////////////////////////////////////////////////////
+    
+    // המטריקה הנוכחית לחישוב מרחקים (Euclidean / Cosine)
+    private DistanceMetric metric; 
 
+    public SpaceManager() {
+        // ברירת מחדל: מרחק אוקלידי
+        this.metric = new EuclideanDistance();
+    }
+
+    // ============================================================
+    // 1. טעינת נתונים ואתחול (Initialization)
+    // ============================================================
+
+    public void ensureDataReady() throws IOException, InterruptedException {
+        File f = new File("pca_vectors.json");
+        
+        try {
+            if (f.exists() && f.length() > 0) {
+                System.out.println("Files found! Loading directly...");
+                loadData();
+            } else {
+                System.out.println("Files missing. Running Python...");
+                initializeSpace(); // מריץ פייתון וטוען
+            }
+        } catch (Exception e) {
+            // --- נוהל חירום: טעינת נתוני דמה ---
+            System.err.println("Real data loading failed: " + e.getMessage());
+            System.err.println("Activating BackupVec protocol...");
+            
+            List<model.WordVector> mockList = BackupVec.generate(150, 50);
+            updateVocabulary(mockList);
+        }
+    }
 
     public void initializeSpace() throws IOException, InterruptedException {
-        // 1. קודם כל מפעילים את הפייתון שייצר את הקבצים
         generateDataWithPython(); 
-        
-        // 2. רק אחרי שהפייתון סיים (waitFor), אנחנו טוענים את התוצאה
-        // שים לב: כאן אנחנו שולחים את שמות קבצי ה-JSON, לא את נתיב הפייתון!
-        this.vocabulary = DataLoader.loadFromFiles("full_vectors.json", "pca_vectors.json");
-        
-        this.wordList = new ArrayList<>(vocabulary.values());
-        // 3. מאתחלים את מנוע החיפוש עם הנתונים הטריים
-        this.searcher = new SemanticSearcher(vocabulary.values(), new EuclideanDistance());
-        
+        loadData();
         System.out.println("Space is ready with " + vocabulary.size() + " words!");
     }
-    ////////////////////////////////////////////////////////////////////
 
-
-    //  הרצת סקריפט הפייתון
-    public void generateDataWithPython() throws IOException, InterruptedException {
-    System.out.println("Starting Python script...");
-
-    // 1. קבלת נתיב תיקיית העבודה הנוכחית של האפליקציה
-    String workingDir = System.getProperty("user.dir");
-    
-    // 2. בניית נתיב יחסי לסקריפט (מניח שהוא נמצא בתיקיית הפרויקט)
-    // File.separator דואג להתאמה בין ווינדוס (\) ללינוקס/מאק (/)
-    File scriptFile = new File(workingDir, "embedder.py");
-    String scriptPath = scriptFile.getAbsolutePath();
-
-    // בדיקה שהסקריפט באמת קיים לפני שמנסים להריץ
-    if (!scriptFile.exists()) {
-        throw new FileNotFoundException("Python script not found at: " + scriptPath);
+    private void loadData() throws IOException {
+        Map<String, WordVector> loadedData = DataLoader.loadFromFiles("full_vectors.json", "pca_vectors.json");
+        updateVocabulary(new ArrayList<>(loadedData.values()));
     }
 
-    // 3. שימוש בפקודה גנרית. 
-    String pythonCommand = "python"; 
-
-    System.out.println("Executing: " + pythonCommand + " " + scriptPath);
-
-    // 4. הרצה
-    ProcessBuilder pb = new ProcessBuilder(pythonCommand, scriptPath);
-    pb.inheritIO(); 
-    
-    try {
-        Process p = pb.start();
-        int exitCode = p.waitFor();
+    private void updateVocabulary(List<WordVector> newList) {
+        this.vocabulary.clear();
+        this.wordList.clear();
         
-        if (exitCode != 0) {
-            throw new RuntimeException("Python script failed with error code: " + exitCode);
+        for (WordVector wv : newList) {
+            this.vocabulary.put(wv.getWord(), wv); // חשוב: מיפוי לפי שם המילה
+            this.wordList.add(wv);
         }
-    } catch (IOException e) {
-        // אם הפקודה "python" נכשלה, ננסה "python3" כגיבוי (נפוץ במחשבי מאק/לינוקס)
-        if (e.getMessage().contains("Cannot run program \"python\"")) {
-            System.out.println("Primary python command failed, trying 'python3'...");
-            pb.command("python3", scriptPath);
-            Process p = pb.start();
-            if (p.waitFor() != 0) throw new RuntimeException("Python script failed on fallback.");
-        } else {
-            throw e;
-        }
+        
+        // אתחול מחדש של המנוע עם הנתונים והמטריקה הנוכחית
+        this.searcher = new SemanticSearcher(this.wordList, this.metric);
     }
 
-    System.out.println("Python script finished successfully.");
-}
-///////////////////////////////////////////////////////////
- 
+    public void generateDataWithPython() throws IOException, InterruptedException {
+        System.out.println("Starting Python script...");
+        String workingDir = System.getProperty("user.dir");
+        File scriptFile = new File(workingDir, "embedder.py");
+        
+        if (!scriptFile.exists()) {
+            throw new FileNotFoundException("Python script not found at: " + scriptFile.getAbsolutePath());
+        }
 
+        ProcessBuilder pb = new ProcessBuilder("python", scriptFile.getAbsolutePath());
+        pb.inheritIO();
+        
+        try {
+            if (pb.start().waitFor() != 0) throw new RuntimeException("Python script failed.");
+        } catch (IOException e) {
+            // ניסיון גיבוי עם python3
+            pb.command("python3", scriptFile.getAbsolutePath());
+            if (pb.start().waitFor() != 0) throw new RuntimeException("Python script failed (fallback).");
+        }
+        System.out.println("Python script finished successfully.");
+    }
+
+    // ============================================================
+    // 2. גישה לנתונים (Getters & Lookups)
+    // ============================================================
 
     public List<WordVector> getWordList() { return wordList; }
-///////////////////////////////////////////////////////////
-    public List<WordVector> getBackupWordList() { return new ArrayList<>(vocabulary.values()); }
-    // פונקציה לחיפוש (לפי דרישות הליבה)
-    public WordVector getWord(String w) { return vocabulary.get(w); }
-///////////////////////////////////////////////////////////
 
+    /**
+     * שליפת וקטור לפי מילה בצורה יעילה (O(1)).
+     * מטפל גם באותיות גדולות/קטנות.
+     */
+    public WordVector getWordVector(String word) {
+        if (word == null) return null;
+        // מנסים בדיוק
+        WordVector wv = vocabulary.get(word);
+        if (wv != null) return wv;
+        
+        // מנסים באותיות קטנות (למקרה שהמפתח נשמר אחרת)
+        return vocabulary.get(word.toLowerCase()); 
+    }
 
+    public double[] getAxisRange(int axisIndex) {
+        double min = Double.MAX_VALUE;
+        double max = -Double.MAX_VALUE;
 
-    //set (again)the serch type
-    public void setMetric(DistanceMetric metric) {
-        if (searcher != null){
-            searcher.setMetric(metric);
+        for (WordVector wv : wordList) {
+            double val = wv.getPcaCoordinate(axisIndex);
+            if (val < min) min = val;
+            if (val > max) max = val;
+        }
+
+        if (min == Double.MAX_VALUE) return new double[]{-1.0, 1.0};
+        double padding = (max - min) * 0.05; 
+        return new double[]{min - padding, max + padding};
+    }
+
+    // ============================================================
+    // 3. לוגיקה וחיפוש (Search & Logic)
+    // ============================================================
+
+    /**
+     * החלפת שיטת חישוב המרחק (Strategy Pattern).
+     */
+    public void changeMetric(DistanceMetric newMetric) {
+        this.metric = newMetric;
+        if (searcher != null) {
+            searcher.setMetric(newMetric);
         }
     }
-///////////////////////////////////////////////////////////
 
-
-   public List<Match> getNeighbors(String queryWord, int k) {
-    // 1. קבלה ותרגום ראשוני (מילה -> וקטור)
-    WordVector vector = vocabulary.get(queryWord); // נניח שיש גישה למילון
-    
-    if (vector == null) {
-        return new ArrayList<>(); // רשימה ריקה אם לא נמצא
+    /**
+     * גרסה 1: מציאת שכנים למילה קיימת.
+     */
+    public List<Match> getNeighbors(String queryWord, int k) {
+        WordVector vector = getWordVector(queryWord);
+        if (vector == null) return new ArrayList<>();
+        
+        // שימוש במנוע החיפוש היעיל
+        return searcher.findNearest(vector.getFullVector(), k);
     }
 
-    // 2. האצלת סמכויות למנוע החיפוש
-    // המנהל פשוט מעביר את הבקשה הלאה ומחזיר את התשובה כמו שהיא
-    return searcher.findNearest(vector.getFullVector(), k);
-}
-///////////////////////////////////////////////////////////
+    /**
+     * גרסה 2: מציאת שכנים לווקטור גולמי (למשל Centroid).
+     * מממש את הלוגיקה ישירות מול ה-Metric כדי לתמוך בנקודות שרירותיות בחלל.
+     */
+    public List<Match> getNeighbors(double[] targetVec, int k) {
+        List<Match> matches = new ArrayList<>();
+        
+        for (WordVector wv : wordList) {
+            // שימוש במטריקה הנוכחית לחישוב המרחק
+            double dist = metric.calculate(targetVec, wv.getVector());
+            matches.add(new Match(wv.getWord(), dist));
+        }
+        
+        // מיון לפי מרחק (מהקטן לגדול)
+        matches.sort((m1, m2) -> Double.compare(m1.distance, m2.distance));
+        
+        // החזרת K הראשונים
+        if (k > matches.size()) k = matches.size();
+        return matches.subList(0, k);
+    }
 
+    /**
+     * פתרון משוואה וקטורית.
+     * שימוש ב-Delegation למחלקה VectorArithmetic.
+     */
+    public EquationResult solveEquation(String equation) {
+        // SpaceManager רק מספק את רשימת המילים, הלוגיקה בחוץ!
+        return VectorArithmetic.solve(equation, this.wordList);
+    }
 
-
+    /**
+     * פתרון אנלוגיה קלאסית (King - Man + Woman).
+     * נשמר לאחור, משתמש במנוע החיפוש.
+     */
     public String solveAnalogy(String w1, String w2, String w3) {
-        WordVector v1 = vocabulary.get(w1); // מילה 1
-        WordVector v2 = vocabulary.get(w2); // מילה2 
-        WordVector v3 = vocabulary.get(w3); // מילה 3
+        WordVector v1 = getWordVector(w1);
+        WordVector v2 = getWordVector(w2);
+        WordVector v3 = getWordVector(w3);
 
         if (v1 == null || v2 == null || v3 == null) return "Word not found";
 
-        // 1. חישוב מתמטי נקי (VectorMath)
-        // תוצאה = מילה1 - מילה 2
         double[] step1 = VectorMath.subtract(v1.getFullVector(), v2.getFullVector());
-        // תוצאה2 = תוצאה + מילה 3
         double[] target = VectorMath.add(step1, v3.getFullVector());
 
         List<Match> results = searcher.findNearest(target, 5);
-        // 2. חיפוש המילים המקושרות לווקטור(Searcher)
+        
         for (Match m : results) {
-        String candidate = m.getWord(); // כאן אנחנו מחלצים את ה-String!
-        
-        // מוודאים שזו לא אחת המילים מהשאלה
-        if (!candidate.equalsIgnoreCase(w1) && 
-            !candidate.equalsIgnoreCase(w2) && 
-            !candidate.equalsIgnoreCase(w3)) {
-            return candidate; // מחזירים String
+            String candidate = m.getWord();
+            if (!candidate.equalsIgnoreCase(w1) && 
+                !candidate.equalsIgnoreCase(w2) && 
+                !candidate.equalsIgnoreCase(w3)) {
+                return candidate;
+            }
         }
+        return "None";
     }
-
-    return "None";
-    }
-////////////////////////////////////////////////////////////
-
-
-
-
-
-    /**
-     * פונקציית עזר למציאת הגבולות של ציר מסוים.
-     * @param axisIndex - איזה רכיב PCA אנחנו בודקים (0, 1, 2...)
-     * @return מערך של שני מספרים: [מינימום, מקסימום]
-     */
-    public double[] getAxisRange(int axisIndex) {
-    double min = Double.MAX_VALUE;
-    double max = -Double.MAX_VALUE;
-
-    for (WordVector wv : wordList) { // עוברים על כל המילים
-        double val = wv.getPcaCoordinate(axisIndex);
-        
-        if (val < min) min = val; // מצאנו שיא נמוך חדש
-        if (val > max) max = val; // מצאנו שיא גבוה חדש
-    }
-
-    // מקרה קצה: אם הרשימה ריקה, נחזיר ברירת מחדל כדי לא לקרוס
-    if (min == Double.MAX_VALUE) return new double[]{-1.0, 1.0};
-    
-    // מוסיפים קצת "אוויר" (Padding) כדי שהנקודות לא יידבקו לקצה המסך
-    double padding = (max - min) * 0.05; 
-    return new double[]{min - padding, max + padding};
-    }
-////////////////////////////////////////////////////////////
-
-
-
-public void changeMetric(DistanceMetric newMetric) {
-    if (searcher != null) {
-        searcher.setMetric(newMetric);
-    }
-}
-/////////////////////////////////////////////////////////////
-
-
-
-
-public void ensureDataReady() throws IOException, InterruptedException {
-    File f = new File("pca_vectors.json");
-    boolean loadSuccess = false; // דגל למעקב
-
-    try {
-        if (f.exists() && f.length() > 0) {
-            System.out.println("Files found! Loading directly...");
-            this.vocabulary = DataLoader.loadFromFiles("full_vectors.json", "pca_vectors.json");
-            loadSuccess = true;
-        } else {
-            System.out.println("Files missing. Running Python...");
-            initializeSpace(); // מנסה להריץ פייתון ולטעון
-            loadSuccess = true;
-        }
-    } catch (Exception e) {
-        // --- תרחיש כישלון: הפעלת נוהל חירום ---
-        System.err.println("Real data loading failed: " + e.getMessage());
-        System.err.println("Activating BackupVec protocol...");
-
-        // יצירת נתוני דמה (משתמש בבנאי השני של WordVector)
-        List<model.WordVector> mockList = BackupVec.generate(150, 50);
-        
-        this.vocabulary = new java.util.HashMap<>();
-        for (model.WordVector wv : mockList) {
-            this.vocabulary.put(wv.getWord(), wv);
-        }
-        loadSuccess = true;
-    } finally {
-        // --- הנקודה הקריטית: סנכרון הציור ---
-        // הבלוק הזה ירוץ תמיד, ויוודא שה-Renderer מקבל את מה שיש ב-vocabulary
-        // (בין אם זה אמיתי ובין אם זה דמה)
-        if (this.vocabulary != null && !this.vocabulary.isEmpty()) {
-            this.wordList = new ArrayList<>(this.vocabulary.values());
-            
-            // אתחול מנוע החיפוש
-            this.searcher = new SemanticSearcher(
-                this.vocabulary.values(), 
-                new math.EuclideanDistance()
-            );
-            
-            System.out.println("Data ready. Total words: " + wordList.size());
-        }
-    }
-}
-/////////////////////////////////////////////////////////////////
-
-
-// בתוך SpaceManager.java
-public List<String> searchForWord(String queryWord) {
-    // 1. בדיקה האם המילה קיימת במילון
-    // נניח שיש לך מפה (Map) או דרך לשלוף WordVector לפי שם
-    WordVector target = vocabulary.get(queryWord.toLowerCase().trim());
-    
-    if (target == null) {
-        List<String> err = new ArrayList<>();
-        err.add("Word not found: " + queryWord);
-        return err;
-    }
-
-    // 2. הפעלת המנוע (Searcher)
-    // שים לב: אנחנו שולחים את הוקטור של המילה שמצאנו
-    List<Match> matches = searcher.findNearest(target.getFullVector(), 10);
-
-    // 3. פירמוט התוצאה לתצוגה (כאן המנהל מחליט איך הטקסט ייראה)
-    List<String> resultStrings = new ArrayList<>();
-    for (Match m : matches) {
-        // פורמט יפה: "Word      (0.123)"
-        resultStrings.add(String.format("%-15s (%.3f)", m.word, m.distance));
-    }
-    return resultStrings;
-}
 }

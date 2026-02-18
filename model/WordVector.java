@@ -32,5 +32,9 @@ public class WordVector {
         return pcaVector[axis];
     }
 
+    public double[] getVector() {
+        return fullVector;
+    }
+
 }
 //VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV

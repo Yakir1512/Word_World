@@ -19,6 +19,10 @@ public class NavigationHandler3D extends AbstractNavigationHandler{
         double sensitivity = 0.005;
         angleY += dx * sensitivity; 
         angleX -= dy * sensitivity; 
+        //הגבלת סיבוב ל90
+        double maxAngle = Math.PI / 2.0 - 0.05; 
+        if (angleX > maxAngle) angleX = maxAngle;
+        if (angleX < -maxAngle) angleX = -maxAngle;
     }
     @Override
     protected void handleScroll(double deltaY) {
