@@ -12,7 +12,7 @@ public class RenderContext {
     public final List<WordVector> words;       // מידע: המילים עצמן (האבא מעביר למטמון, הבנים מציירים)
     public final ProjectionStrategy proj;      // כלי: אסטרטגיית ההטלה (האבא והבנים צריכים)
     public final Viewport viewport;            // מידע: גבולות וצירים (האבא למטמון, הבנים לציור)
-    public final double textDensity;
+    public  double textDensity;
 
     // ==========================================
     // נתוני תלת-ממד בלבד (בשימוש GraphRenderer3D)
