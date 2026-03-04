@@ -24,114 +24,127 @@
 
 ```mermaid
 classDiagram
-    %% --- Main Application ---
-    class LatentSpaceExplorer {
-        -SpaceManager spaceManager
-        -GraphRenderer renderer
-        -NavigationHandler navHandler
-        +start(Stage primaryStage)
-        -handleCanvasClick()
-        -updateCentroidAnalysis()
+    %% ==========================================================
+    %% 1. Core Interfaces & Abstracts (The Foundation)
+    %% ==========================================================
+    
+    class ProjectionStrategy {
+        <<Interface>>
+        +project(WordVector wv, int[] axes...) double[]
     }
 
-    %% --- Engine & Data Management ---
-    namespace Engine {
-        class SpaceManager {
-            -Map~String, WordVector~ vocabulary
-            -List~WordVector~ wordList
-            -SemanticSearcher searcher
-            +ensureDataReady()
-            +getNeighbors(double[] vec, int k)
-            +solveEquation(String eq)
-        }
+    class AbstractRenderer {
+        <<Abstract>>
+        -Canvas canvas
+        +render(RenderContext ctx)
+        #drawElements(RenderContext ctx)*
     }
 
-    %% --- Model ---
-    namespace Model {
-        class WordVector {
-            -String word
-            -double[] fullVector
-            -double[] pcaVector
-            +getVector()
-        }
-        class EquationResult {
-            +List~String~ pathWords
-            +List~Boolean~ operations
-            +String resultWord
-        }
-        class Match {
-            +String word
-            +double distance
-        }
+    class Application {
+        <<JavaFX>>
     }
 
-    %% --- Math & Logic ---
-    namespace Math {
-        class VectorArithmetic {
-            <<Static>>
-            +calculateCentroid(List vectors)
-            +solve(String eq, List list)
-        }
-        class SemanticSearcher {
-            +findNearest()
-        }
-        class ProjectionStrategy {
-            <<Interface>>
-            +project(WordVector wv...)
-        }
-        class Linear2DProjection {
-            +project()
-        }
-        class SemanticAxisProjection {
-            -double[] axisVec
-            +project()
-        }
-        class Perspective3DProjection {
-            +project()
-        }
-    }
+    %% ==========================================================
+    %% 2. Implementations (Polymorphism)
+    %% ==========================================================
 
-    %% --- View / Rendering ---
-    namespace View {
-        class AbstractRenderer {
-            <<Abstract>>
-            -Canvas canvas
-            +render(RenderContext ctx)
-            #drawElements()
-        }
-        class GraphRenderer {
-            -EquationResult currentEquation
-            -List subspaceSelection
-            -double[] currentCentroid
-            +setEquationResult()
-            +setSubspaceData()
-            #drawElements()
-        }
-        class GraphRenderer3D {
-            #drawElements()
-        }
-        class RenderContext {
-            +List~WordVector~ words
-            +ProjectionStrategy projStrat
-            +Viewport viewport
-        }
-    }
-
-    %% --- Relationships ---
-    LatentSpaceExplorer --> SpaceManager : Uses
-    LatentSpaceExplorer --> GraphRenderer : Uses
-    LatentSpaceExplorer ..> ProjectionStrategy : Selects Strategy
-
-    SpaceManager --> WordVector : Manages
-    SpaceManager ..> VectorArithmetic : Delegates Math
-    SpaceManager --> SemanticSearcher : Uses
-
-    VectorArithmetic ..> EquationResult : Creates
-
-    AbstractRenderer <|-- GraphRenderer
-    AbstractRenderer <|-- GraphRenderer3D
-    GraphRenderer ..> RenderContext : Reads
-
+    %% Projections
     ProjectionStrategy <|.. Linear2DProjection : Implements
-    ProjectionStrategy <|.. SemanticAxisProjection : Implements
     ProjectionStrategy <|.. Perspective3DProjection : Implements
+    ProjectionStrategy <|.. SemanticAxisProjection : Implements
+
+    %% Renderers
+    AbstractRenderer <|-- GraphRenderer : Extends
+    AbstractRenderer <|-- GraphRenderer3D : Extends
+
+    %% Entry Point
+    Application <|-- LatentSpaceExplorer : Extends
+
+    %% ==========================================================
+    %% 3. The MVC Structure (New Architecture)
+    %% ==========================================================
+
+    class LatentSpaceExplorer {
+        +start(Stage primaryStage)
+    }
+
+    class AppController {
+        -SpaceManager spaceManager
+        -WorkspaceState state
+        -SidebarView sidebar
+        -CanvasView canvasView
+        +initializeBindings()
+        +refreshView()
+    }
+
+    class WorkspaceState {
+        +boolean is3DMode
+        +int[] axisIndices
+        +ProjectionStrategy currentStrategy
+        +resetToStandardMode()
+    }
+
+    class SidebarView {
+        -VBox mainLayout
+        +getView() VBox
+        +getSolveEqBtn() Button
+        +getKNeighborsSpinner() Spinner
+    }
+
+    class CanvasView {
+        -StackPane mainLayout
+        -GraphRenderer renderer2D
+        -GraphRenderer3D renderer3D
+        +render(RenderContext ctx, boolean is3D)
+        +getCanvas() Canvas
+    }
+
+    %% ==========================================================
+    %% 4. Engine & Logic
+    %% ==========================================================
+
+    class SpaceManager {
+        -Map~String, WordVector~ vocabulary
+        +ensureDataReady()
+        +getNeighbors(double[] vec, int k)
+        +solveEquation(String eq)
+    }
+
+    class VectorArithmetic {
+        <<Static>>
+        +calculateCentroid(List vectors)
+        +solve(String eq)
+    }
+
+    class RenderContext {
+        +List~WordVector~ words
+        +ProjectionStrategy projStrat
+        +Viewport viewport
+    }
+
+    %% ==========================================================
+    %% 5. Relationships & Wiring
+    %% ==========================================================
+
+    %% Main Setup
+    LatentSpaceExplorer ..> AppController : Creates & Initializes
+    LatentSpaceExplorer ..> WorkspaceState : Creates
+    LatentSpaceExplorer ..> SidebarView : Creates
+    LatentSpaceExplorer ..> CanvasView : Creates
+
+    %% Controller wiring
+    AppController o-- WorkspaceState : Manages
+    AppController o-- SidebarView : Listens/Updates
+    AppController o-- CanvasView : Controls
+    AppController --> SpaceManager : Uses Logic
+
+    %% View Composition
+    CanvasView *-- GraphRenderer : Composed of
+    CanvasView *-- GraphRenderer3D : Composed of
+
+    %% Logic Dependencies
+    SpaceManager ..> VectorArithmetic : Delegates Math
+    GraphRenderer ..> RenderContext : Consumes
+    
+    %% Strategy Pattern Usage
+    WorkspaceState o-- ProjectionStrategy : Holds Strategy
