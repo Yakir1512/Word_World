@@ -1,0 +1,17 @@
+{
+    "java.project.referencedLibraries": [
+        "lib/**/*.jar",
+        "c:\\Users\\Yakir\\Downloads\\openjfx-27-ea+6_windows-x64_bin-sdk\\javafx-sdk-27\\lib\\javafx.base.jar",
+        "c:\\Users\\Yakir\\Downloads\\openjfx-27-ea+6_windows-x64_bin-sdk\\javafx-sdk-27\\lib\\javafx.controls.jar",
+        "c:\\Users\\Yakir\\Downloads\\openjfx-27-ea+6_windows-x64_bin-sdk\\javafx-sdk-27\\lib\\javafx.fxml.jar",
+        "c:\\Users\\Yakir\\Downloads\\openjfx-27-ea+6_windows-x64_bin-sdk\\javafx-sdk-27\\lib\\javafx.graphics.jar",
+        "c:\\Users\\Yakir\\Downloads\\openjfx-27-ea+6_windows-x64_bin-sdk\\javafx-sdk-27\\lib\\javafx.media.jar",
+        "c:\\Users\\Yakir\\Downloads\\openjfx-27-ea+6_windows-x64_bin-sdk\\javafx-sdk-27\\lib\\javafx.swing.jar",
+        "c:\\Users\\Yakir\\Downloads\\openjfx-27-ea+6_windows-x64_bin-sdk\\javafx-sdk-27\\lib\\javafx.web.jar",
+        "c:\\Users\\Yakir\\Downloads\\openjfx-27-ea+6_windows-x64_bin-sdk\\javafx-sdk-27\\lib\\javafx-swt.jar",
+        "c:\\Users\\Yakir\\Downloads\\openjfx-27-ea+6_windows-x64_bin-sdk\\javafx-sdk-27\\lib\\jdk.jsobject.jar",
+        "c:\\Users\\Yakir\\Downloads\\openjfx-27-ea+6_windows-x64_bin-sdk\\javafx-sdk-27\\lib\\jfx.incubator.input.jar",
+        "c:\\Users\\Yakir\\Downloads\\openjfx-27-ea+6_windows-x64_bin-sdk\\javafx-sdk-27\\lib\\jfx.incubator.richtext.jar",
+        "Word_World/src/gson-2.13.2.jar"
+    ]
+}
