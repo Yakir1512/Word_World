@@ -10,7 +10,7 @@
 
 | תצוגת דו-ממד ואריתמטיקה | ניתוח צירים ותלת-ממד |
 | :---: | :---: |
-| ![Main View](screenshots/main_view.png) | ![3D Projection](screenshots/3d_view.png) |
+| ![Main View](screenshots/צילום מסך WW 2D.png) | ![3D Projection](screenshots/3d_view.png) |
 | *חישוב וקטורי של משוואות מילים* | *חקר המרחב בתצוגת פרספקטיבה* |
 
 ---
