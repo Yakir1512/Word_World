@@ -6,17 +6,6 @@
 
 ---
 
-## 📸 תמונות מסך (Screenshots)
-
-| תצוגת דו-ממד ואריתמטיקה | ניתוח צירים ותלת-ממד |
-| :---: | :---: |
-| ![Main View](Word_World
-/screenshots/צילום מסך WW 2D.png) | ![3D Projection](/Word_World
-screenshots/צילום מסך 3D .png) |
-| *חישוב וקטורי של משוואות מילים* | *חקר המרחב בתצוגת פרספקטיבה* |
-
----
-
 ## ✨ תכונות מרכזיות (Features)
 
 * **🌍 ויזואליזציה רב-ממדית:** מעבר חלק בין תצוגת דו-ממד (2D Projection) לתצוגת תלת-ממד (3D Perspective) עם שליטה מלאה (Zoom, Pan, Rotate).
@@ -146,3 +135,19 @@ classDiagram
     ProjectionStrategy <|.. Linear2DProjection : Implements
     ProjectionStrategy <|.. SemanticAxisProjection : Implements
     ProjectionStrategy <|.. Perspective3DProjection : Implements
+```
+
+---
+
+## 📸 צילומי מסך (Screenshots)
+
+להלן מספר צילומי מסך מהאפליקציה המדגימים את התכונות השונות:
+
+### תצוגה 2D עם מילה ממוצעת
+![2D צילום מסך מילה ממוצעת](../screenshots/2D%20צילום%20מסך%20מילה%20ממוצעת%20.png)
+
+### תצוגה 3D
+![צילום מסך 3D](../screenshots/צילום%20מסך%203D%20.png)
+
+### תצוגה 2D כללית
+![צילום מסך WW 2D](../screenshots/צילום%20מסך%20WW%202D.png)
