@@ -66,9 +66,11 @@ public class GraphRenderer3D extends AbstractRenderer {
     // =======================================================
     private RenderElement transformPoint(WordVector wv, double[] pos, RenderContext ctx, double cx, double cy) {
         // מזיזים את הנקודות למרכז כדי לסובב את המרחב סביב האמצע
+        // תיקון: גם Z מורכז סביב אמצע הטווח (כמו X ו-Y)
+        double cz = canvas.getWidth() / 2.0; // Z range ≈ width range
         double x = pos[0] - cx;
         double y = pos[1] - cy;
-        double z = pos[2]; 
+        double z = pos[2] - cz;
 
         // סיבוב סביב ציר Y
         double cosY = Math.cos(ctx.angleY);

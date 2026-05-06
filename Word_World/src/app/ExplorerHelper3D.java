@@ -9,10 +9,11 @@ public class ExplorerHelper3D {
      * הוספנו את הפרמטר scale כדי לתמוך בזום.
      */
    public static double[] projectToScreen(double[] worldCoords, double centerX, double centerY, double angleX, double angleY, double scale) {
-        // 1. הזזה למרכז
+        // 1. הזזה למרכז — Z מורכז בדיוק כמו ב-GraphRenderer3D
+        double centerZ = centerX; // Z range ≈ width range (כמו ב-GraphRenderer3D)
         double x = worldCoords[0] - centerX;
         double y = worldCoords[1] - centerY;
-        double z = worldCoords[2];
+        double z = worldCoords[2] - centerZ;
 
         // 2. סיבוב סביב ציר Y (תוקן כדי להתאים ל-GraphRenderer3D)
         double cosY = Math.cos(angleY);

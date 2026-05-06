@@ -109,6 +109,36 @@ public class GraphRenderer extends AbstractRenderer {
         if (currentEquation != null) {
             drawEquationPath();
         }
+
+        // 4. ציור תוויות ציר סמנטי (אם יש)
+        if (ctx.proj instanceof math.SemanticAxisProjection) {
+            drawSemanticAxisLabels(ctx);
+        }
+    }
+
+    /**
+     * מצייר תוויות "Start" ו-"End" על הציר הסמנטי בתחתית המסך
+     */
+    private void drawSemanticAxisLabels(RenderContext ctx) {
+        double w = canvas.getWidth();
+        double h = canvas.getHeight();
+
+        // קו ציר
+        gc.setStroke(javafx.scene.paint.Color.web("#4ec9b0", 0.4));
+        gc.setLineWidth(1.0);
+        gc.strokeLine(50, h / 2, w - 50, h / 2);
+
+        // תוויות קצה
+        gc.setFill(javafx.scene.paint.Color.web("#4ec9b0"));
+        gc.setFont(javafx.scene.text.Font.font(null, javafx.scene.text.FontWeight.BOLD, 12));
+        gc.fillText("◀ Start", 5, h / 2 - 6);
+        gc.fillText("End ▶", w - 55, h / 2 - 6);
+
+        // כותרת באמצע
+        gc.setFill(javafx.scene.paint.Color.web("#4ec9b0", 0.7));
+        gc.setFont(javafx.scene.text.Font.font(null, 10));
+        gc.fillText("Semantic Axis", w / 2 - 35, h - 10);
+        gc.setFont(javafx.scene.text.Font.getDefault());
     }
 
     /**

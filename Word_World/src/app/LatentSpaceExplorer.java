@@ -10,42 +10,48 @@ public class LatentSpaceExplorer extends Application {
 
     @Override
     public void start(Stage primaryStage) {
-        
-        double width = 1200; 
+
+        double width  = 1280;
         double height = 800;
-    
 
-        // 1. אתחול המודלים (Data & State)
+        // 1. אתחול המודלים
         SpaceManager spaceManager = new SpaceManager();
-        WorkspaceState state = new WorkspaceState();
+        WorkspaceState state      = new WorkspaceState();
 
-        // 2. אתחול התצוגות (Views)
+        // 2. אתחול התצוגות
         SidebarView sidebar = new SidebarView();
-        
-        // שמנו לב שצריך להעביר פונקציית רענון לקנבס. נעשה זאת דרך משתנה זמני.
+
         AppController[] controllerRef = new AppController[1];
-        CanvasView canvasView = new CanvasView(width - 260, height, spaceManager, () -> {
+        CanvasView canvasView = new CanvasView(width - 275, height, spaceManager, () -> {
             if (controllerRef[0] != null) controllerRef[0].refreshView();
         });
 
-        // 3. אתחול הבקר המתווך (Controller)
+        // 3. אתחול הבקר
         AppController controller = new AppController(spaceManager, state, sidebar, canvasView);
-        controllerRef[0] = controller; // סגירת המעגל עבור ה-Callback
-        
-        // הפעלת כל החיבורים והמאזינים
+        controllerRef[0] = controller;
         controller.initializeBindings();
 
         // 4. הרכבת המסך הראשי
         BorderPane root = new BorderPane();
-        root.setLeft(sidebar.getView());
+        // שימוש ב-ScrollPane כדי שה-Sidebar יהיה גלילה אם צריך
+        root.setLeft(sidebar.getScrollView());
         root.setCenter(canvasView.getView());
 
         Scene scene = new Scene(root, width, height);
-        primaryStage.setTitle("LatentSpace Explorer Pro (MVC Architecture)");
+        scene.getStylesheets().add("data:text/css," +
+            ".titled-pane > .title { -fx-background-color: #2d2d2d; -fx-text-fill: white; }" +
+            ".titled-pane > .title > .arrow-button .arrow { -fx-background-color: #4ec9b0; }" +
+            ".scroll-bar { -fx-background-color: #1e1e1e; }" +
+            ".combo-box { -fx-background-color: #3c3c3c; -fx-text-fill: white; }" +
+            ".combo-box .list-cell { -fx-background-color: #3c3c3c; -fx-text-fill: white; }"
+        );
+
+        primaryStage.setTitle("LatentSpace Explorer — Word Embedding Visualizer");
         primaryStage.setScene(scene);
+        primaryStage.setMinWidth(900);
+        primaryStage.setMinHeight(600);
         primaryStage.show();
 
-        // ציור ראשוני
         controller.refreshView();
     }
 
