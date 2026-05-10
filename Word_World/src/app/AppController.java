@@ -21,6 +21,8 @@ public class AppController {
     private final WorkspaceState state;
     private final SidebarView sidebar;
     private final CanvasView canvasView;
+    private double startX, startY;
+    private final double DRAG_THRESHOLD = 5.0; // כמות הפיקסלים שמגדירה "גרירה"
 
     public AppController(SpaceManager spaceManager, WorkspaceState state,
                          SidebarView sidebar, CanvasView canvasView) {
@@ -246,7 +248,16 @@ public class AppController {
     }
 
     private void setupCanvasClick() {
-        canvasView.getCanvas().setOnMouseClicked(event -> handleCanvasClick(event));
+    // // 1. תפיסת נקודת ההתחלה ברגע שהעכבר נוגע במסך (לפני הגרירה)
+    // canvasView.getCanvas().setOnMousePressed(event -> {
+    //     this.startX = event.getX();
+    //     this.startY = event.getY();
+    // });
+
+    
+
+    // 2. קריאה ללוגיקה המרכזית (שתבדוק עכשיו את המרחק מ-startX/Y)
+    canvasView.getCanvas().setOnMouseClicked(event -> handleCanvasClick(event));
     }
 
     // ============================================================
@@ -257,6 +268,9 @@ public class AppController {
         String clickedWord = null;
         double x = event.getX();
         double y = event.getY();
+
+
+        
 
         if (state.is3DMode()) {
             NavigationHandler3D nav3D = canvasView.getNavHandler3D();
