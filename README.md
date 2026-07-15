@@ -47,6 +47,113 @@ pip install scikit-learn gensim numpy
 > **שים לב:** הסקריפט `embedder.py` חייב להימצא באותה תיקייה שממנה מריצים את הג'אווה.
 
 ---
+```mermaid
+classDiagram
+    %% הגדרת סגנונות (Styles)
+    classDef appLayer fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef controllerLayer fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
+    classDef viewLayer fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    classDef engineLayer fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    classDef mathLayer fill:#fffde7,stroke:#fbc02d,stroke-width:2px
+    classDef modelLayer fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+
+    %% --- מחלקות המערכת ---
+    
+    class LatentSpaceExplorer {
+        +start(Stage stage)
+        +main(String[] args)
+    }
+
+    class AppController {
+        -SpaceManager spaceManager
+        -WorkspaceState state
+        +initializeBindings()
+        +handleCanvasClick(MouseEvent)
+        +refreshView()
+    }
+
+    class WorkspaceState {
+        -boolean is3DMode
+        -int[] axisIndices
+        +resetToStandardMode()
+        +clearAllSelections()
+    }
+
+    class SpaceManager {
+        -Map vocabulary
+        -SemanticSearcher searcher
+        +ensureDataReady()
+        +getNeighbors(String, int)
+        +solveEquation(String)
+    }
+
+    class DataLoader {
+        +loadFromFiles(String, String)
+    }
+
+    class SemanticSearcher {
+        -Collection vocabulary
+        +findNearest(double[], int)
+    }
+
+    class CanvasView {
+        -Canvas canvas
+        -AbstractRenderer renderer
+        +render(RenderContext, boolean)
+        +set3DNavigationEnabled(boolean)
+    }
+
+    class SidebarView {
+        -VBox mainLayout
+        +setStatusText(String)
+        +getLoadBtn() Button
+    }
+
+    class AbstractRenderer {
+        <<abstract>>
+        #Map projectionCache
+        +render(RenderContext)
+        #drawElements(RenderContext)*
+    }
+
+    class GraphRenderer3D {
+        -transformPoint()
+        #drawElements(RenderContext)
+    }
+
+    class ProjectionStrategy {
+        <<interface>>
+        +project() double[]
+    }
+
+    class WordVector {
+        -String word
+        -double[] fullVector
+        +getPcaCoordinate(int)
+    }
+
+    %% --- קשרים (Relationships) ---
+    
+    LatentSpaceExplorer ..> AppController : Creates
+    AppController --> SpaceManager : Uses
+    AppController --> WorkspaceState : Manages
+    AppController --> CanvasView : Controls
+    AppController --> SidebarView : Updates
+
+    SpaceManager *-- SemanticSearcher : Owns
+    SpaceManager ..> DataLoader : Uses
+    
+    CanvasView *-- AbstractRenderer : Contains
+    AbstractRenderer <|-- GraphRenderer3D : Extends
+    AbstractRenderer o-- ProjectionStrategy : Strategy
+    
+    SemanticSearcher ..> WordVector : Searches
+
+    %% --- החלת עיצובים (Styles) ---
+    %% יישום אחד-אחד ללא פסיקים או נקודה-פסיק למניעת שגיאות Lexical
+    
+```
+
 
 ## ארכיטקטורה — תרשים מחלקות
 
