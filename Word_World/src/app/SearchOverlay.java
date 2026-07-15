@@ -24,10 +24,10 @@ public class SearchOverlay extends VBox {
         this.spaceManager = manager;
         
         // --- עיצוב החלון הצף ---
-        this.setMaxSize(300, 400); // גודל קבוע לחלון הצף
+        this.setMaxSize(300, 335); // גודל קבוע לחלון הצף
         this.setPadding(new Insets(15));
         this.setSpacing(10);
-        this.setAlignment(Pos.TOP_CENTER);
+        this.setAlignment(Pos.TOP_RIGHT);
         
         // רקע שחור חצי שקוף עם פינות עגולות
         this.setStyle("-fx-background-color: rgba(30, 30, 30, 0.85); " +

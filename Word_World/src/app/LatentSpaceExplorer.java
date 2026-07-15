@@ -14,26 +14,28 @@ public class LatentSpaceExplorer extends Application {
         double width  = 1280;
         double height = 800;
 
-        // 1. אתחול המודלים
+        // 1. Model Initialization
         SpaceManager spaceManager = new SpaceManager();
         WorkspaceState state      = new WorkspaceState();
 
-        // 2. אתחול התצוגות
+        // 2. View Initialization
         SidebarView sidebar = new SidebarView();
+        GamePanel gamePanel = new GamePanel(spaceManager);
 
         AppController[] controllerRef = new AppController[1];
         CanvasView canvasView = new CanvasView(width - 275, height, spaceManager, () -> {
             if (controllerRef[0] != null) controllerRef[0].refreshView();
         });
 
-        // 3. אתחול הבקר
-        AppController controller = new AppController(spaceManager, state, sidebar, canvasView);
+        // 3. Controller Initialization
+        AppController controller = new AppController(spaceManager, state, sidebar, canvasView, gamePanel);
         controllerRef[0] = controller;
         controller.initializeBindings();
 
-        // 4. הרכבת המסך הראשי
+        // 4. Main Layout Assembly
         BorderPane root = new BorderPane();
-        // שימוש ב-ScrollPane כדי שה-Sidebar יהיה גלילה אם צריך
+        
+        // Use ScrollPane from sidebar to allow scrolling if content overflows
         root.setLeft(sidebar.getScrollView());
         root.setCenter(canvasView.getView());
 
@@ -46,12 +48,14 @@ public class LatentSpaceExplorer extends Application {
             ".combo-box .list-cell { -fx-background-color: #3c3c3c; -fx-text-fill: white; }"
         );
 
+        // 5. Window (Stage) Configuration
         primaryStage.setTitle("LatentSpace Explorer — Word Embedding Visualizer");
         primaryStage.setScene(scene);
         primaryStage.setMinWidth(900);
         primaryStage.setMinHeight(600);
         primaryStage.show();
 
+        // Trigger initial view refresh
         controller.refreshView();
     }
 

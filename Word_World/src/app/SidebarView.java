@@ -1,6 +1,7 @@
 package app;
 
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
@@ -16,6 +17,10 @@ import javafx.scene.text.FontWeight;
 public class SidebarView {
 
     private VBox mainLayout;
+
+    private Button toggleCollapseBtn;
+    private boolean isCollapsed = false;
+    private VBox contentContainer; // יחזיק את כל התוכן מתחת לכפתור הצמצום
 
     // מצב תצוגה
     private ToggleGroup viewGroup;
@@ -63,16 +68,26 @@ public class SidebarView {
     }
 
     private void buildUI() {
-        // --- כותרת ---
+        // --- Title & Toggle Button ---
         Label titleLabel = new Label("LatentSpace Explorer");
         titleLabel.setFont(Font.font("Arial", FontWeight.BOLD, 18));
         titleLabel.setTextFill(Color.web("#4ec9b0"));
+
+        toggleCollapseBtn = new Button("◀");
+        styleButton(toggleCollapseBtn, "#333333");
+        toggleCollapseBtn.setPrefWidth(40);
+
+        HBox headerBar = new HBox(10, titleLabel, toggleCollapseBtn);
+        headerBar.setAlignment(Pos.CENTER_LEFT);
+
+        // --- Main Content Container (Collapsible) ---
+        contentContainer = new VBox(12);
 
         Label subtitleLabel = new Label("Word Embedding Visualizer");
         subtitleLabel.setFont(Font.font("Arial", 11));
         subtitleLabel.setTextFill(Color.LIGHTGRAY);
 
-        // --- מצב תצוגה ---
+        // --- View Mode ---
         Label viewHeader = createHeader("📐 View Mode");
         rb2D = new RadioButton("2D Projection");
         rb3D = new RadioButton("3D Perspective");
@@ -83,7 +98,7 @@ public class SidebarView {
         rb3D.setToggleGroup(viewGroup);
         VBox viewBox = new VBox(5, rb2D, rb3D);
 
-        // --- צפיפות טקסט ---
+        // --- Text Density (3D) ---
         Label densityHeader = createHeader("🔤 Text Density (3D)");
         textDensitySlider = new Slider(9.0, 12.0, 9.0);
         textDensitySlider.setShowTickMarks(true);
@@ -91,7 +106,7 @@ public class SidebarView {
         textDensitySlider.setStyle("-fx-control-inner-background: #3c3c3c;");
         VBox densityBox = new VBox(5, densityHeader, textDensitySlider);
 
-        // --- כלי 1: Subspace Analysis (Centroid) ---
+        // --- Tool 1: Subspace Analysis (Centroid) ---
         Label kHeader = new Label("Neighbors (K):");
         kHeader.setTextFill(Color.WHITE);
         kNeighborsSpinner = new Spinner<>(1, 50, 5);
@@ -110,7 +125,7 @@ public class SidebarView {
         subspaceContent.setPadding(new Insets(10));
         TitledPane subspacePane = createStyledPane("🔵 Subspace / Centroid", subspaceContent);
 
-        // --- כלי 2: ציר סמנטי ---
+        // --- Tool 2: Semantic Axis ---
         wordComboA = new ComboBox<>();
         wordComboB = new ComboBox<>();
         wordComboA.setPromptText("Start Word (e.g. poor)");
@@ -137,7 +152,7 @@ public class SidebarView {
         semanticContent.setPadding(new Insets(10));
         TitledPane semanticPane = createStyledPane("🧭 Semantic Axis", semanticContent);
 
-        // --- כלי 3: מרחק סמנטי — חדש! ---
+        // --- Tool 3: Semantic Distance ---
         distWordA = new ComboBox<>();
         distWordB = new ComboBox<>();
         distWordA.setPromptText("Word A");
@@ -163,7 +178,7 @@ public class SidebarView {
         distContent.setPadding(new Insets(10));
         TitledPane distPane = createStyledPane("📐 Semantic Distance", distContent);
 
-        // --- כלי 4: משוואה וקטורית ---
+        // --- Tool 4: Vector Arithmetic ---
         equationField = new TextField();
         equationField.setPromptText("e.g. king - man + woman");
         equationField.setStyle("-fx-background-color: #3c3c3c; -fx-text-fill: white;");
@@ -179,7 +194,7 @@ public class SidebarView {
         mathContent.setPadding(new Insets(10));
         TitledPane mathPane = createStyledPane("🧮 Vector Arithmetic", mathContent);
 
-        // --- ניהול דאטה ---
+        // --- Data Management ---
         Label dataHeader = createHeader("💾 Data Source");
         loadBtn = new Button("🐍 Run Python & Load Data");
         styleButton(loadBtn, "#8b4513");
@@ -189,7 +204,7 @@ public class SidebarView {
         statusLabel.setWrapText(true);
         statusLabel.setFont(Font.font("Arial", 11));
 
-        // --- בחירת צירים ---
+        // --- PCA Axis Selection ---
         Label axisHeader = createHeader("📊 Projection Axes (PCA)");
         xSelect = createAxisCombo(); ySelect = createAxisCombo(); zSelect = createAxisCombo();
         xSelect.setValue(0); ySelect.setValue(1); zSelect.setValue(2);
@@ -207,7 +222,7 @@ public class SidebarView {
         axisGrid.add(yLbl, 0, 1); axisGrid.add(ySelect, 1, 1);
         axisGrid.add(zLabel, 0, 2); axisGrid.add(zSelect, 1, 2);
 
-        // --- מטריקת מרחק ---
+        // --- Distance Metric ---
         Label metricHeader = createHeader("📏 Distance Metric");
         rbEuclidean = new RadioButton("Euclidean Distance");
         rbCosine = new RadioButton("Cosine Similarity");
@@ -229,22 +244,9 @@ public class SidebarView {
             legendItem("●", Color.MAGENTA, "Equation result")
         );
 
-        // --- הרכבת ה-Sidebar ---
-        mainLayout = new VBox(12);
-        mainLayout.setPadding(new Insets(12));
-        mainLayout.setPrefWidth(260);
-        mainLayout.setStyle(
-            "-fx-background-color: #1e1e1e;" +
-            "-fx-border-color: #333; -fx-border-width: 0 1 0 0;"
-        );
-
-        ScrollPane scroll = new ScrollPane(mainLayout);
-        scroll.setFitToWidth(true);
-        scroll.setStyle("-fx-background: #1e1e1e; -fx-background-color: #1e1e1e;");
-        scroll.setPrefWidth(275);
-
-        mainLayout.getChildren().addAll(
-            titleLabel, subtitleLabel, new Separator(),
+        // --- Assemble Content Container ---
+        contentContainer.getChildren().addAll(
+            subtitleLabel, new Separator(),
             viewHeader, viewBox, new Separator(),
             densityBox, new Separator(),
             subspacePane, semanticPane, distPane, mathPane, new Separator(),
@@ -254,7 +256,24 @@ public class SidebarView {
             legendHeader, legendBox
         );
 
-        // עטיפה ב-ScrollPane — שומרים reference ל-mainLayout אבל מחזירים scroll
+        // --- Assembling the Main Sidebar Layout ---
+        mainLayout = new VBox(12);
+        mainLayout.setPadding(new Insets(12));
+        mainLayout.setPrefWidth(260);
+        mainLayout.setStyle(
+            "-fx-background-color: #1e1e1e;" +
+            "-fx-border-color: #333; -fx-border-width: 0 1 0 0;"
+        );
+
+        // Add only the header and the collapsible content container
+        mainLayout.getChildren().addAll(headerBar, contentContainer);
+
+        // Wrap in ScrollPane - keep reference to mainLayout but return scroll
+        ScrollPane scroll = new ScrollPane(mainLayout);
+        scroll.setFitToWidth(true);
+        scroll.setStyle("-fx-background: #1e1e1e; -fx-background-color: #1e1e1e;");
+        scroll.setPrefWidth(275);
+
         this._scrollPane = scroll;
     }
 
@@ -309,10 +328,41 @@ public class SidebarView {
         return box;
     }
 
+
+    public void toggleCollapse() {
+    isCollapsed = !isCollapsed;
+    
+    if (isCollapsed) {
+        // מצב מצומצם: מעלימים את התוכן ומקטינים את הרוחב
+        contentContainer.setVisible(false);
+        contentContainer.setManaged(false);
+        
+        toggleCollapseBtn.setText("▶"); // חץ ימינה לפתיחה
+        
+        // כיווץ ויזואלי של הסיידבר
+        mainLayout.setPrefWidth(60);
+        _scrollPane.setPrefWidth(75);
+    } else {
+        // מצב מורחב: מחזירים את התוכן והרוחב המקורי
+        contentContainer.setVisible(true);
+        contentContainer.setManaged(true);
+        
+        toggleCollapseBtn.setText("◀");
+        
+        mainLayout.setPrefWidth(260);
+        _scrollPane.setPrefWidth(275);
+    }
+}
+
+
+
     // ============================================================
     // Getters
     // ============================================================
 
+    public Button getToggleCollapseBtn() {
+    return toggleCollapseBtn;
+    }
     public VBox getView() { return mainLayout; }
 
     public ToggleGroup getViewGroup() { return viewGroup; }

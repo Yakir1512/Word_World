@@ -21,15 +21,17 @@ public class AppController {
     private final WorkspaceState state;
     private final SidebarView sidebar;
     private final CanvasView canvasView;
+    private final GamePanel gamePanel;
     private double startX, startY;
     private final double DRAG_THRESHOLD = 5.0; // כמות הפיקסלים שמגדירה "גרירה"
 
     public AppController(SpaceManager spaceManager, WorkspaceState state,
-                         SidebarView sidebar, CanvasView canvasView) {
+                         SidebarView sidebar, CanvasView canvasView, GamePanel gamePanel) {
         this.spaceManager = spaceManager;
         this.state = state;
         this.sidebar = sidebar;
         this.canvasView = canvasView;
+        this.gamePanel = gamePanel;
     }
 
     public void initializeBindings() {
@@ -248,11 +250,11 @@ public class AppController {
     }
 
     private void setupCanvasClick() {
-    // // 1. תפיסת נקודת ההתחלה ברגע שהעכבר נוגע במסך (לפני הגרירה)
-    // canvasView.getCanvas().setOnMousePressed(event -> {
-    //     this.startX = event.getX();
-    //     this.startY = event.getY();
-    // });
+    // 1. תפיסת נקודת ההתחלה ברגע שהעכבר נוגע במסך (לפני הגרירה)
+    canvasView.getCanvas().setOnMousePressed(event -> {
+        this.startX = event.getX();
+        this.startY = event.getY();
+    });
 
     
 
@@ -265,6 +267,12 @@ public class AppController {
     // ============================================================
 
     private void handleCanvasClick(javafx.scene.input.MouseEvent event) {
+        //
+        double dist = Math.sqrt(Math.pow(event.getX() - startX, 2) + Math.pow(event.getY() - startY, 2));
+        if (dist > DRAG_THRESHOLD) {
+            return; 
+        }
+
         String clickedWord = null;
         double x = event.getX();
         double y = event.getY();
